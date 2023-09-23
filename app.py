@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_identity, create_access_token, jwt_required
-from models import db, User
+from models import db, User, Foro
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
@@ -30,14 +30,14 @@ def main():
 @app.route('/api/register', methods=['POST'])
 def register():
     
-    correoelectronico= request.json.get("correoelectronico")
-    password = request.json.get("password")
-    nombre = request.json.get("nombre")
-    apellido = request.json.get("apellido")
-    direccion = request.json.get("direccion")
-    pais = request.json.get("pais")
-    region = request.json.get("region")
-    fechanac = request.json.get("fechanac")
+    correoelectronico= request.json["correoelectronico"]
+    password = request.json["password"]
+    nombre = request.json["nombre"]
+    apellido = request.json["apellido"]
+    direccion = request.json["direccion"]
+    pais = request.json["pais"]
+    region = request.json["region"]
+    fechanac = request.json["fechanac"]
     
     # Validamos los datos ingresados
     if not correoelectronico:
@@ -74,6 +74,12 @@ def register():
     # Aqui estamos creando al nuevo usuario
     user = User()
     user.correoelectronico = correoelectronico
+    user.nombre = nombre
+    user.apellido = apellido
+    user.direccion = direccion
+    user.pais = pais
+    user.region = region
+    user.fechanac = fechanac
     user.password = generate_password_hash(password) 
     user.save()
     
@@ -85,7 +91,7 @@ def login():
     password = request.json.get("password")
     
     # Validamos los datos ingresados
-    if not username:
+    if not correoelectronico:
         return jsonify({"fail": "correoelectronico es requerido!"}), 422
     
     if not password:
@@ -122,6 +128,35 @@ def profile():
     
     return jsonify({ "message": "Ruta privada", "user": user.correoelectronico }), 200
 
+@app.route('/api/post_topic', methods=['POST'])
+def create_post():    
+    
+        
+
+    # Obtiene los datos del nuevo tema del cuerpo de la solicitud JSON
+    data = request.json
+    user_id = data.get('user_id')
+    # Crea una instancia de la clase Foro con los datos proporcionados
+    nuevo_post = Foro(
+        titulo=data["titulo"],
+        
+        contenido=data["contenido"],
+        user_id=user_id  # Asigna el ID del usuario al tema
+    )
+
+    # Guarda el nuevo tema en la base de datos
+    try:
+        nuevo_post.save()
+        return jsonify({"message": "Tema creado exitosamente"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/post_topic_all', methods=['GET'])
+def get_all_posts():
+    topics = Foro.query.all()
+    result = list(map(lambda tema:tema.serialize(),topics))
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run()
+
