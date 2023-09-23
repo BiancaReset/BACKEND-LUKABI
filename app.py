@@ -30,7 +30,7 @@ def main():
 @app.route('/api/register', methods=['POST'])
 def register():
     
-    correoelectronico= request.json.get("correoelectronico")
+    correo = request.json.get("correo")
     password = request.json.get("password")
     nombre = request.json.get("nombre")
     apellido = request.json.get("apellido")
@@ -40,7 +40,7 @@ def register():
     fechanac = request.json.get("fechanac")
     
     # Validamos los datos ingresados
-    if not correoelectronico:
+    if not correo:
         return jsonify({"fail": "correo electrónico es requerido!"}), 422
     
     if not password:
@@ -62,37 +62,42 @@ def register():
         return jsonify({"fail": "region es requerida"}), 422
 
     if not fechanac:
-        return jsonify({"fail": "fechanac es requerids"}), 422
+        return jsonify({"fail": "fechanac es requerida"}), 422
 
 
     # Buscamos el usuario a ver si ya existe con ese username
-    userFound = User.query.filter_by(correoelectronico=correoelectronico).first()
+    userFound = User.query.filter_by(correo=correo).first()
     
     if userFound:
         return jsonify({"fail": "correo electrónico ya está en uso!"}), 400
     
     # Aqui estamos creando al nuevo usuario
     user = User()
-    user.correoelectronico = correoelectronico
+    user.correo = correo
     user.password = generate_password_hash(password) 
+    user.nombre = nombre
+    user.apellido = apellido
+    user.pais = pais
+    user.region = region
+    user.fechanac = fechanac 
     user.save()
     
     return jsonify({ "success": "Registro exitoso, por favor inicie sesion!"}), 200
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    correoelectronico = request.json.get("correoelectronico")
+    correo = request.json.get("correo")
     password = request.json.get("password")
     
     # Validamos los datos ingresados
     if not username:
-        return jsonify({"fail": "correoelectronico es requerido!"}), 422
+        return jsonify({"fail": "correo electronico es requerido!"}), 422
     
     if not password:
         return jsonify({"fail": "password es requerido!"}), 422
     
     # buscamos al usuario 
-    user = User.query.filter_by(correoelectronico=correoelectronico).first()
+    user = User.query.filter_by(correo=correo).first()
     
     # si no exite el usuario 
     if not user:
@@ -114,13 +119,13 @@ def login():
     
     return jsonify(data), 200
 
-@app.route('/api/profile', methods=['GET'])
+@app.route('/api/id', methods=['GET'])
 @jwt_required()
 def profile():
     id = get_jwt_identity()
     user = User.query.get(id)
     
-    return jsonify({ "message": "Ruta privada", "user": user.correoelectronico }), 200
+    return jsonify({ "message": "Ruta privada", "user": user.correo }), 200
 
 
 if __name__ == '__main__':
