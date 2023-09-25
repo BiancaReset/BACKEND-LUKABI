@@ -38,3 +38,37 @@ class User(db.Model):
         db.session.delete(self)
         db.session.commit()
         
+class Comercio(db.Model):
+    __tablename__ = 'comercios'
+    id = db.Column(db.Integer, primary_key=True)
+    correo = db.Column(db.String(120), nullable=False, unique=True)
+    password = db.Column(db.String(120), nullable=False)
+    activo = db.Column(db.Boolean(), default=True)
+    nombre = db.Column(db.String(120), nullable=False)
+    direccion = db.Column(db.String(120))
+    pais =db.Column(db.String(120), nullable=False)
+    region = db.Column(db.String(120), nullable=False)
+    descripcion = db.Column(db.String(250), nullable=False)
+    def serialize(self):
+        return {
+            "id": self.id,
+            "correo": self.correo,
+            "activo": self.activo,
+            "nombre": self.nombre,
+            "direccion": self.direccion, 
+            "pais": self.pais,
+            "region": self.region,
+            "descripcion": self.descripcion,    
+            }            
+        
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+        
+    def update(self):
+        db.session.commit()
+        
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+            
