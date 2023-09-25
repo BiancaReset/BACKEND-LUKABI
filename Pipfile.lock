@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "502dc0215211b85823e16414b85ab7d928a62379afc4fd6b2cbe4456fc510643"
+            "sha256": "412ce9620fbd124e03764ca2603d7a31b978bf2ebb3e84e60db1df6156fe7fd8"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -40,6 +40,14 @@
             "markers": "python_version >= '3.7'",
             "version": "==8.1.7"
         },
+        "colorama": {
+            "hashes": [
+                "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44",
+                "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+            ],
+            "markers": "platform_system == 'Windows'",
+            "version": "==0.4.6"
+        },
         "flask": {
             "hashes": [
                 "sha256:09c347a92aa7ff4a8e7f3206795f30d826654baf38b873d0744cd571ca609efc",
@@ -72,7 +80,10 @@
                 "sha256:d3f437a8b5f3849d1bb1b60e1b818efc564c66e3fefe90b62e5db08db295e1b1"
             ],
             "index": "pypi",
+<<<<<<< HEAD
             "markers": "python_version >= '3.6'",
+=======
+>>>>>>> luis
             "version": "==4.0.5"
         },
         "flask-sqlalchemy": {
@@ -81,7 +92,10 @@
                 "sha256:e4b68bb881802dda1a7d878b2fc84c06d1ee57fb40b874d3dc97dabfa36b8312"
             ],
             "index": "pypi",
+<<<<<<< HEAD
             "markers": "python_version >= '3.8'",
+=======
+>>>>>>> luis
             "version": "==3.1.1"
         },
         "greenlet": {
@@ -153,6 +167,7 @@
             ],
             "markers": "platform_machine == 'aarch64' or (platform_machine == 'ppc64le' or (platform_machine == 'x86_64' or (platform_machine == 'amd64' or (platform_machine == 'AMD64' or (platform_machine == 'win32' or platform_machine == 'WIN32')))))",
             "version": "==2.0.2"
+<<<<<<< HEAD
         },
         "importlib-metadata": {
             "hashes": [
@@ -169,6 +184,8 @@
             ],
             "markers": "python_version < '3.9'",
             "version": "==6.0.1"
+=======
+>>>>>>> luis
         },
         "itsdangerous": {
             "hashes": [
@@ -267,6 +284,14 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==2.8.0"
+        },
+        "pymysql": {
+            "hashes": [
+                "sha256:4f13a7df8bf36a51e81dd9f3605fede45a4878fe02f9236349fd82a3f0612f96",
+                "sha256:8969ec6d763c856f7073c4c64662882675702efcb114b4bcbb955aea3a069fa7"
+            ],
+            "index": "pypi",
+            "version": "==1.1.0"
         },
         "python-dotenv": {
             "hashes": [
