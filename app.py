@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_identity, create_access_token, jwt_required
-from models import db, User, Foro
+from models import db, User, Foro, Comentarios
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
@@ -130,9 +130,6 @@ def profile():
 
 @app.route('/api/post_topic', methods=['POST'])
 def create_post():    
-    
-        
-
     # Obtiene los datos del nuevo tema del cuerpo de la solicitud JSON
     data = request.json
     user_id = data.get('user_id')
@@ -154,8 +151,106 @@ def create_post():
 @app.route('/api/post_topic_all', methods=['GET'])
 def get_all_posts():
     topics = Foro.query.all()
+    print(topics[0].user.serialize())
     result = list(map(lambda tema:tema.serialize(),topics))
     return jsonify(result)
+
+@app.route('/api/post_comment', methods=['POST'])
+def post_comment():
+    data = request.json
+    # Obtener el user_id y foro_id del cuerpo de la solicitud
+    user_id = data.get('user_id')
+    foro_id = data.get('foro_id')
+    # Verificar si se proporcionó un user_id válido
+    if user_id is None:
+        return jsonify({'message': 'El campo user_id es requerido'}), 400
+    # Verificar si el usuario existe en la base de datos
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({'message': 'El usuario no existe'}), 404
+    # Verificar si se proporcionó un proyecto_id válido
+    if foro_id is None:
+        return jsonify({'message': 'El campo foro_id es requerido'}), 400
+    # Verificar si el proyecto existe en la base de datos
+    foro = Foro.query.get(foro_id)
+
+   
+     # Crea una instancia de la clase Foro con los datos proporcionados
+    post = Comentarios(
+        comentario=data["comentario"],
+        user_id=user_id,  # Asigna el ID del usuario al tema
+        foro_id=foro_id, # Asigna el ID del foro 
+    )
+
+    # Guarda el nuevo tema en la base de datos
+    try:
+        post.save()
+        return jsonify({"message": "Publicado exitosamente"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/post_comments/<int:foro_id>', methods=['GET'])
+def get_comments(foro_id):
+    # Busca los comentarios relacionados con el tema (post) por su ID en la base de datos
+    comentarios = Comentarios.query.filter_by(foro_id=foro_id).all()
+
+    # Serializa la lista de comentarios y devuelve como JSON
+    serialized_comments = [comentario.serialize() for comentario in comentarios]
+
+    return jsonify(serialized_comments), 200
+
+
+@app.route('/api/delete_comment/<int:id>', methods=['DELETE'])
+def delete_comment(id):
+    user_id = request.json.get('user_id')  # Obtener user_id de la solicitud
+    # Verificar si se proporcionó un user_id válido en la solicitud
+    if user_id is None:
+        return jsonify({'message': 'El campo user_id es requerido'}), 400
+    # Buscar el comentario en la base de datos por su ID
+    comentario = Comentarios.query.get(id)
+    # Verificar si el comentario existe
+    if comentario is None:
+        return jsonify({'message': 'El comentario no existe'}), 404
+    # Verificar si el user_id de la solicitud coincide con el user_id del comentario
+    if user_id != comentario.user_id:
+        return jsonify({'message': 'No tienes permiso para eliminar este comentario'}), 403
+    # Eliminar el comentario de la base de datos
+    try:
+        comentario.delete()
+        return jsonify({'message': 'Comentario eliminado exitosamente'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+from flask import request, jsonify
+@app.route('/api/update_comment/<int:id>', methods=['PUT'])
+def update_comment(id):
+    user_id = request.json.get('user_id')  # Obtener user_id de la solicitud
+    # Verificar si se proporcionó un user_id válido en la solicitud
+    if user_id is None:
+        return jsonify({'message': 'El campo user_id es requerido'}), 400
+    # Buscar el comentario en la base de datos por su ID
+    comentario = Comentarios.query.get(id)
+    # Verificar si el comentario existe
+    if comentario is None:
+        return jsonify({'message': 'El comentario no existe'}), 404
+    # Verificar si el user_id de la solicitud coincide con el user_id del comentario
+    if user_id != comentario.user_id:
+        return jsonify({'message': 'No tienes permiso para actualizar este comentario'}), 403
+    # Actualizar el contenido del comentario con los datos de la solicitud
+    try:
+        comentario.comentario = request.json.get('comentario', comentario.comentario)
+        comentario.save()  # Guardar los cambios en la base de datos
+        return jsonify({'message': 'Comentario actualizado exitosamente'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run()

@@ -16,3 +16,8 @@ pymysql = "*"
 
 [requires]
 python_version = "3.11"
+
+[scripts]
+migrate = "flask db migrate"
+upgrade = "flask db upgrade"
+start = "python app.py"
