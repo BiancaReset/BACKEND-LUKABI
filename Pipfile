@@ -10,6 +10,7 @@ flask-cors = "*"
 flask-jwt-extended = "*"
 python-dotenv = "*"
 flask-sqlalchemy = "*"
+pymysql = "*"
 
 [dev-packages]
 
@@ -17,7 +18,7 @@ flask-sqlalchemy = "*"
 python_version = "3.8"
 
 [scripts]
-start="flask run -p 5001 -h 0.0.0.0"
+start="flask run -p 5000 -h 0.0.0.0"
 init="flask db init"
 migrate="flask db migrate"
 local="heroku local"
