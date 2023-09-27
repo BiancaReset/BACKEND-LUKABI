@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_identity, create_access_token, jwt_required
-from models import db, User, Foro, Comentarios, Foro, Comentarios
+from models import db, User, Foro, Comentarios, Foro, Comentarios, Comercio
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
@@ -240,12 +240,6 @@ def update_comment(id):
         return jsonify({'message': 'Comentario actualizado exitosamente'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
-
-
-
-
 
 
 @app.route('/api/comercios', methods=['GET'])
