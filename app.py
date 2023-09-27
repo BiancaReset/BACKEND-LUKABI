@@ -90,7 +90,7 @@ def login():
     password = request.json.get("password")
     
     # Validamos los datos ingresados
-    if not username:
+    if not correo:
         return jsonify({"fail": "correo electronico es requerido!"}), 422
     
     if not password:
