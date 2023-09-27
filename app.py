@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_identity, create_access_token, jwt_required
-from models import db, User, Foro, Comentarios
+from models import db, User, Foro, Comentarios, Foro, Comentarios, Comercio
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
@@ -29,12 +29,12 @@ def main():
 
 @app.route('/api/register', methods=['POST'])
 def register():
-    
     correo = request.json.get("correo")
     password = request.json.get("password")
     nombre = request.json.get("nombre")
     apellido = request.json.get("apellido")
     direccion = request.json.get("direccion")
+    direccion2 = request.json.get("direccion2")
     pais = request.json.get("pais")
     region = request.json.get("region")
     fechanac = request.json.get("fechanac")
@@ -51,9 +51,6 @@ def register():
 
     if not apellido:
         return jsonify({"fail": "apellido es requerido"}), 422
-
-    if not direccion:
-        return jsonify({""}), 
 
     if not pais:
         return jsonify({"fail": "pais es requerido"}), 422
@@ -245,12 +242,31 @@ def update_comment(id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/comercios', methods=['GET'])
+def obtener_comercios():
+    comercios = Comercio.query.all()
 
+    lista_comercios = []
+    for comercio in comercios:
+        comercio_dict = {
+            "nombre": comercio.nombre,
+            "correo": comercio.correo,
+            "direccion": comercio.direccion,
+            "direccion2" : comercio.direccion2, 
+            "pais": comercio.pais,
+            "region": comercio.region,
+            "website": comercio.website,
+            "descripcion": comercio.descripcion
+        }
+        lista_comercios.append(comercio_dict)
 
-
-
-
+    return jsonify({'comercios': lista_comercios})
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
+
+
+
+    
+    
