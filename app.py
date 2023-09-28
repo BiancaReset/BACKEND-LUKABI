@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_identity, create_access_token, jwt_required
-from models import db, User, Foro, Comentarios
+from models import db, User, Foro, Comentarios, Informacion
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
@@ -90,7 +90,7 @@ def login():
     password = request.json.get("password")
     
     # Validamos los datos ingresados
-    if not username:
+    if not correo:
         return jsonify({"fail": "correo electronico es requerido!"}), 422
     
     if not password:
@@ -199,6 +199,43 @@ def get_comments(foro_id):
 
     return jsonify(serialized_comments), 200
 
+@app.route('/informacion', methods=['GET'])
+def obtener_informacion():
+    informacion = Informacion.query.all()
+    informacion_serializada = [item.serialize() for item in informacion]
+    return jsonify(informacion_serializada), 200
+
+@app.route('/api/add', methods=['POST'])
+def add_informacion():
+    
+   
+    nombre = request.json.get("nombre")
+    descripcion = request.json.get("descripcion")
+    direccion = request.json.get("direccion")
+   
+    
+    # Validamos los datos ingresados
+  
+
+    if not nombre:
+        return jsonify({"fail": "nombre es requerido"}), 422
+
+    if not direccion:
+        return jsonify({"fail":"direccion es requerida"}), 422
+
+    if not descripcion:
+        return jsonify({"fail": "descripcion requerida"}), 422
+
+    
+    # Aqui estamos creando al nuevo producto
+    add = Informacion()
+    add.nombre = nombre
+    add.direccion = direccion
+    add.descripcion = descripcion    
+    add.save()
+    
+    return jsonify({ "success": "Registro de producto exitoso"}), 200
+
 
 @app.route('/api/delete_comment/<int:id>', methods=['DELETE'])
 def delete_comment(id):
@@ -243,6 +280,8 @@ def update_comment(id):
         return jsonify({'message': 'Comentario actualizado exitosamente'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+    
 
 
 
@@ -253,4 +292,20 @@ def update_comment(id):
 
 if __name__ == '__main__':
     app.run()
+
+
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+# ... Configuración de la base de datos y modelos aquí ...
+
+@app.route('/informacion', methods=['GET'])
+def obtener_informacion():
+    informacion = Informacion.query.all()
+    informacion_serializada = [item.serialize() for item in informacion]
+    return jsonify(informacion_serializada), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)
 

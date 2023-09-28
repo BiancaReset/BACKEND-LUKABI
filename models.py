@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+
 db = SQLAlchemy()
 
 class User(db.Model):
@@ -114,4 +115,28 @@ class Comentarios(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+class Informacion(db.Model):
+    __tablename__ = 'informacion'
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(120), nullable=False)
+    direccion = db.Column(db.String(120), nullable=True)  # Puedes cambiar el nullable a False si es obligatorio
+    descripcion = db.Column(db.String(240), nullable=True)  # Puedes cambiar el nullable a False si es obligatorio
+    user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('informacion', lazy=True))
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "direccion": self.direccion,
+            "descripcion": self.descripcion,
+            "user_id": self.user_id,
+            "user": self.user.serialize(),
+        }
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+        
         
