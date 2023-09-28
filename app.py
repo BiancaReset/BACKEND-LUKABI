@@ -147,7 +147,7 @@ def create_post():
 @app.route('/api/post_topic_all', methods=['GET'])
 def get_all_posts():
     topics = Foro.query.all()
-    print(topics[0].user.serialize())
+    # print(topics[0].user.serialize())
     result = list(map(lambda tema:tema.serialize(),topics))
     return jsonify(result)
 
@@ -260,10 +260,19 @@ def obtener_comercios():
         }
         lista_comercios.append(comercio_dict)
 
-    return jsonify({'comercios': lista_comercios})
+    return jsonify(lista_comercios)
+
+
+@app.route('/api/comercio', methods=['POST'])
+def registrar_comercio():
+    
+    print(request.get_json())
+    return jsonify("hola")
+    
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
