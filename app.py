@@ -265,9 +265,56 @@ def obtener_comercios():
 
 @app.route('/api/comercio', methods=['POST'])
 def registrar_comercio():
+    nombre = request.json.get("nombre")
+    correo = request.json.get("correo")
+    password = request.json.get("password")
+    direccion = request.json.get("direccion")
+    direccion2 = request.json.get("direccion2")
+    pais = request.json.get("pais")
+    region = request.json.get("region")
+    website = request.json.get("website")
+    descripcion = request.json.get("descripcion")
     
-    print(request.get_json())
-    return jsonify("hola")
+    # Validamos los datos ingresados
+    if not correo:
+        return jsonify({"fail": "correo electrónico es requerido!"}), 422
+    
+    if not password:
+        return jsonify({"fail": "password es requerido!"}), 422
+
+    if not nombre:
+        return jsonify({"fail": "nombre es requerido"}), 422
+
+    if not pais:
+        return jsonify({"fail": "pais es requerido"}), 422
+
+    if not region:
+        return jsonify({"fail": "region es requerida"}), 422
+
+    if not website:
+        return jsonify({"fail": "website es requerida"}), 422
+
+
+    # Buscamos el usuario a ver si ya existe con ese username
+    userFound = User.query.filter_by(correo=correo).first()
+    
+    if userFound:
+        return jsonify({"fail": "correo electrónico ya está en uso!"}), 400
+    
+    # Aqui estamos creando al nuevo usuario
+    comercio = Comercio()
+    comercio.correo = correo
+    comercio.password = generate_password_hash(password) 
+    comercio.nombre = nombre
+    comercio.pais = pais
+    comercio.region = region
+    comercio.website = website
+    comercio.descripcion = descripcion
+
+    comercio.save()
+    
+    return jsonify({ "success": "Registro exitoso, por favor inicie sesion!"}), 200
+    
     
 
 if __name__ == '__main__':
