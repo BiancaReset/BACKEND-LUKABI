@@ -332,7 +332,6 @@ def delete_comment(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-from flask import request, jsonify
 @app.route('/api/update_comment/<int:id>', methods=['PUT'])
 def update_comment(id):
     user_id = request.json.get('user_id')  # Obtener user_id de la solicitud
