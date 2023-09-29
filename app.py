@@ -205,36 +205,113 @@ def obtener_informacion():
     informacion_serializada = [item.serialize() for item in informacion]
     return jsonify(informacion_serializada), 200
 
-@app.route('/api/add', methods=['POST'])
-def add_informacion():
+@app.route('/api/informacion/user/<int:user_id>', methods=['GET'])
+def obtener_informacion_por_user_id(user_id):
+    # Buscar el registro en la base de datos por user_id
+    informacion = Informacion.query.filter_by(user_id=user_id).first()
+
+    # Verificar si el registro existe
+    if not informacion:
+        return jsonify({'error': 'Registro no encontrado para el user_id proporcionado'}), 404
+
+    # Convertir el registro a un diccionario para la respuesta JSON
+# Convertir el registro a un diccionario para la respuesta JSON
+    informacion_dict = {
+        'id': informacion.id,
+        'user_id': informacion.user_id,
+        'nombre': informacion.nombre,
+        'direccion': informacion.direccion,
+        'descripcion': informacion.descripcion
+    }
+
+    return jsonify(informacion_dict)
+
+@app.route('/api/post_producto', methods=['POST'])
+def post_producto():
+    data = request.json
+    # Obtener el user_id y foro_id del cuerpo de la solicitud
+    user_id = data.get('user_id')
+    nombre = data.get('nombre')
+    direccion = data.get('direccion')
+    descripcion = data.get('descripcion')
+    # Verificar si se proporcionó un user_id válido
+    if user_id is None:
+        return jsonify({'message': 'El campo user_id es requerido'}), 400
+    # Verificar si el usuario existe en la base de datos
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({'message': 'El usuario no existe'}), 404
+    # Verificar si se proporcionó un proyecto_id válido
     
+ 
+
    
-    nombre = request.json.get("nombre")
-    descripcion = request.json.get("descripcion")
-    direccion = request.json.get("direccion")
-   
+     # Crea una instancia de la clase Foro con los datos proporcionados
+    post = Informacion(
+        user_id=user_id,  # Asigna el ID del usuario al tema
+        nombre=nombre, 
+        direccion=direccion,
+        descripcion=descripcion, # Asigna el ID del foro 
+    )
+
+    # Guarda el nuevo tema en la base de datos
+    try:
+        post.save()
+        return jsonify({"message": "Publicado exitosamente"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/update_producto/<int:id>', methods=['PUT'])
+def update_producto(id):
+    user_id = request.json.get('user_id')  # Obtener user_id de la solicitud
+    nombre = request.json.get('nombre')  # Obtener user_id de la solicitud
+    direccion = request.json.get('direccion')  # Obtener user_id de la solicitud
+    descripcion = request.json.get('descripcion')  # Obtener user_id de la solicitud
+    # Verificar si se proporcionó un user_id válido en la solicitud
+    if user_id is None:
+        return jsonify({'message': 'El campo user_id es requerido'}), 400
+    # Buscar el comentario en la base de datos por su ID
+    informacion = Informacion.query.get(id)
+    # Verificar si el comentario existe
+    if informacion is None:
+        return jsonify({'message': 'El producto no existe'}), 404
+    # Verificar si el user_id de la solicitud coincide con el user_id del comentario
+    if user_id != informacion.user_id:
+
+        return jsonify({'message': 'No tienes permiso para actualizar esta informacion'}), 403
+    # Actualizar el contenido del comentario con los datos de la solicitud
+    try:
+        informacion.id = request.json.get('id', informacion.id)
+        informacion.nombre = request.json.get('nombre', informacion.nombre)
+        informacion.direccion = request.json.get('direccion', informacion.direccion)
+        informacion.descripcion = request.json.get('descripcion', informacion.descripcion)
+        informacion.save()  # Guardar los cambios en la base de datos
+        return jsonify({'message': 'Articulo actualizado exitosamente'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
     
-    # Validamos los datos ingresados
-  
+@app.route('/api/delete_producto/<int:id>', methods=['DELETE'])
+def delete_producto(id):
+    user_id = request.json.get('user_id')  # Obtener user_id de la solicitud
+    # Verificar si se proporcionó un user_id válido en la solicitud
+    if user_id is None:
+        return jsonify({'message': 'El campo user_id es requerido'}), 400
+    # Buscar el comentario en la base de datos por su ID
+    informacion = Informacion.query.get(id)
+    # Verificar si el comentario existe
+    if informacion is None:
+        return jsonify({'message': 'El informacion no existe'}), 404
+    # Verificar si el user_id de la solicitud coincide con el user_id del informacion
+    if user_id != informacion.user_id:
+        return jsonify({'message': 'No tienes permiso para eliminar este informacion'}), 403
+    # Eliminar el informacion de la base de datos
+    try:
+        db.session.delete(informacion)
+        db.session.commit()
 
-    if not nombre:
-        return jsonify({"fail": "nombre es requerido"}), 422
-
-    if not direccion:
-        return jsonify({"fail":"direccion es requerida"}), 422
-
-    if not descripcion:
-        return jsonify({"fail": "descripcion requerida"}), 422
-
-    
-    # Aqui estamos creando al nuevo producto
-    add = Informacion()
-    add.nombre = nombre
-    add.direccion = direccion
-    add.descripcion = descripcion    
-    add.save()
-    
-    return jsonify({ "success": "Registro de producto exitoso"}), 200
+        return jsonify({'message': 'informacion eliminado exitosamente'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/delete_comment/<int:id>', methods=['DELETE'])
@@ -280,31 +357,6 @@ def update_comment(id):
         return jsonify({'message': 'Comentario actualizado exitosamente'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-    
-
-
-
-
-
-
-
-
-if __name__ == '__main__':
-    app.run()
-
-
-from flask import Flask, jsonify
-
-app = Flask(__name__)
-
-# ... Configuración de la base de datos y modelos aquí ...
-
-@app.route('/informacion', methods=['GET'])
-def obtener_informacion():
-    informacion = Informacion.query.all()
-    informacion_serializada = [item.serialize() for item in informacion]
-    return jsonify(informacion_serializada), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
