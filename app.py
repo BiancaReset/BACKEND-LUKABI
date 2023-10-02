@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_identity, create_access_token, jwt_required
-from models import db, User, Foro, Informacion, Comentarios, Comercio
+from models import db, User, Foro, Informacion, Comentarios, Comercio, ComentariosProducto
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
@@ -427,8 +427,96 @@ def registrar_comercio():
     comercio.save()
     
     return jsonify({ "success": "Registro exitoso, por favor inicie sesion!"}), 200
-    
-    
+
+
+@app.route('/api/post_product_comment', methods=['POST'])
+def post_product_comment():
+    data = request.json
+    # Obtener el user_id y foro_id del cuerpo de la solicitud
+    user_id = data.get('user_id')
+    producto_id = data.get('producto_id')
+    # Verificar si se proporcionó un user_id válido
+    if user_id is None:
+        return jsonify({'message': 'El campo user_id es requerido'}), 400
+    # Verificar si el usuario existe en la base de datos
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({'message': 'El usuario no existe'}), 404
+    # Verificar si se proporcionó un proyecto_id válido
+    if producto_id is None:
+        return jsonify({'message': 'El campo producto_id es requerido'}), 400
+    # Verificar si el proyecto existe en la base de datos
+    producto = Informacion.query.get(producto_id)
+
+   
+     # Crea una instancia de la clase Foro con los datos proporcionados
+    post = ComentariosProducto(
+        comentario=data["comentario"],
+        user_id=user_id,  # Asigna el ID del usuario al tema
+        producto_id=producto_id, # Asigna el ID del foro 
+    )
+
+    # Guarda el nuevo tema en la base de datos
+    try:
+        post.save()
+        return jsonify({"message": "Publicado exitosamente"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/product_comment/<int:producto_id>', methods=['GET'])
+def get_product_comment(producto_id):
+    # Busca los comentarios relacionados con el tema (post) por su ID en la base de datos
+    comentarios = ComentariosProducto.query.filter_by(producto_id=producto_id).all()
+
+    # Serializa la lista de comentarios y devuelve como JSON
+    serialized_comments = [comentario.serialize() for comentario in comentarios]
+
+    return jsonify(serialized_comments), 200
+
+@app.route('/api/update_comment_product/<int:id>', methods=['PUT'])
+def update_comment_product(id):
+    user_id = request.json.get('user_id')  # Obtener user_id de la solicitud
+    # Verificar si se proporcionó un user_id válido en la solicitud
+    if user_id is None:
+        return jsonify({'message': 'El campo user_id es requerido'}), 400
+    # Buscar el comentario en la base de datos por su ID
+    comentario = ComentariosProducto.query.get(id)
+    # Verificar si el comentario existe
+    if comentario is None:
+        return jsonify({'message': 'El comentario no existe'}), 404
+    # Verificar si el user_id de la solicitud coincide con el user_id del comentario
+    if user_id != comentario.user_id:
+        return jsonify({'message': 'No tienes permiso para actualizar este comentario'}), 403
+    # Actualizar el contenido del comentario con los datos de la solicitud
+    try:
+        comentario.comentario = request.json.get('comentario', comentario.comentario)
+        comentario.save()  # Guardar los cambios en la base de datos
+        return jsonify({'message': 'Comentario actualizado exitosamente'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/delete_product_comment/<int:id>', methods=['DELETE'])
+def delete_product_comment(id):
+    user_id = request.json.get('user_id')  # Obtener user_id de la solicitud
+    # Verificar si se proporcionó un user_id válido en la solicitud
+    if user_id is None:
+        return jsonify({'message': 'El campo user_id es requerido'}), 400
+    # Buscar el comentario en la base de datos por su ID
+    comentario = ComentariosProducto.query.get(id)
+    # Verificar si el comentario existe
+    if comentario is None:
+        return jsonify({'message': 'El comentario no existe'}), 404
+    # Verificar si el user_id de la solicitud coincide con el user_id del comentario
+    if user_id != comentario.user_id:
+        return jsonify({'message': 'No tienes permiso para eliminar este comentario'}), 403
+    # Eliminar el comentario de la base de datos
+    try:
+        comentario.delete()
+        return jsonify({'message': 'Comentario eliminado exitosamente'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

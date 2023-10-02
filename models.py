@@ -156,6 +156,7 @@ class Informacion(db.Model):
     __tablename__ = 'informacion'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(120), nullable=False)
+    fecha = db.Column(db.DateTime, default=datetime.today, nullable=False)
     direccion = db.Column(db.String(120), nullable=True)  # Puedes cambiar el nullable a False si es obligatorio
     descripcion = db.Column(db.String(240), nullable=True)  # Puedes cambiar el nullable a False si es obligatorio
     user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
@@ -165,6 +166,7 @@ class Informacion(db.Model):
         return {
             "id": self.id,
             "nombre": self.nombre,
+            "fecha": self.fecha.strftime("%Y-%m-%d %H:%M:%S"),
             "direccion": self.direccion,
             "descripcion": self.descripcion,
             "user_id": self.user_id,
@@ -174,6 +176,43 @@ class Informacion(db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
+
+
+class ComentariosProducto(db.Model):
+    __tablename__ = 'comentarios_productos'
+    id = db.Column(db.Integer, primary_key=True)
+    fecha = db.Column(db.DateTime,  default=datetime.today, nullable=False)
+    comentario = db.Column(db.String(120), default=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    producto_id = db.Column(db.Integer, db.ForeignKey('informacion.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('comentarios_productos', lazy=True))
+    producto = db.relationship('Informacion', backref=db.backref('comentarios_productos', lazy=True))
+    
+    
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "fecha": self.fecha.strftime("%Y-%m-%d %H:%M:%S"),
+            "comentario": self.comentario,
+            "user_id": self.user_id,
+            "producto_id": self.producto_id,
+            "user": self.user.serialize(),
+            "producto": self.producto.serialize(),
+            
+           
+                        
+                }       
         
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+        
+    def update(self):
+        db.session.commit()
+        
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
         
             
