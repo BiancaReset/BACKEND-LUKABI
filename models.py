@@ -156,7 +156,7 @@ class Informacion(db.Model):
     __tablename__ = 'informacion'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(120), nullable=False)
-    fecha = db.Column(db.DateTime, default=datetime.today, nullable=False)
+    fecha = db.Column(db.DateTime, default=datetime.today, nullable=True)
     direccion = db.Column(db.String(120), nullable=True)  # Puedes cambiar el nullable a False si es obligatorio
     descripcion = db.Column(db.String(240), nullable=True)  # Puedes cambiar el nullable a False si es obligatorio
     user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
@@ -166,7 +166,7 @@ class Informacion(db.Model):
         return {
             "id": self.id,
             "nombre": self.nombre,
-            "fecha": self.fecha.strftime("%Y-%m-%d %H:%M:%S"),
+            "fecha": self.fecha.strftime("%Y-%m-%d %H:%M:%S") if self.fecha is not None else "",
             "direccion": self.direccion,
             "descripcion": self.descripcion,
             "user_id": self.user_id,
