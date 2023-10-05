@@ -13,6 +13,7 @@ flask-sqlalchemy = "*"
 pymysql = "*"
 cryptography = "*"
 werkzeug = "*"
+ansible = "*"
 
 [dev-packages]
 
