@@ -83,6 +83,8 @@ class Foro(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(120), nullable=False)
     fecha = db.Column(db.DateTime, default=datetime.today, nullable=False)
+    activo = db.Column(db.Boolean(), default=True)
+    comentario_rep = db.Column(db.String(240), nullable=False)
     contenido = db.Column(db.String(240), nullable=False)
     comentario = db.Column(db.String(120), default=True)
     user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
@@ -99,7 +101,8 @@ class Foro(db.Model):
             "comnetario": self.comentario,
             "user_id": self.user_id,
             "user": self.user.serialize(),
-            
+            "activo": self.activo.serialize(),
+            "comentario_rep": self.comentario_rep.serialize(),
                         
                 }       
         
@@ -120,6 +123,8 @@ class Comentarios(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     fecha = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     comentario = db.Column(db.String(120), default=True)
+    activo = db.Column(db.Boolean(), default=True)
+    comentario_rep = db.Column(db.String(240), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     foro_id = db.Column(db.Integer, db.ForeignKey('foro.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('comentarios', lazy=True))
@@ -136,7 +141,8 @@ class Comentarios(db.Model):
             "foro_id": self.foro_id,
             "user": self.user.serialize(),
             "foro": self.foro.serialize(),
-            
+            "activo": self.activo.serialize(),
+            "comentario_rep": self.comentario_rep.serialize(),
            
                         
                 }       
@@ -159,6 +165,8 @@ class Informacion(db.Model):
     fecha = db.Column(db.DateTime, default=datetime.today, nullable=False)
     direccion = db.Column(db.String(120), nullable=True)  # Puedes cambiar el nullable a False si es obligatorio
     descripcion = db.Column(db.String(240), nullable=True)  # Puedes cambiar el nullable a False si es obligatorio
+    activo = db.Column(db.Boolean(), default=True)
+    comentario_rep = db.Column(db.String(240), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('informacion', lazy=True))
 
@@ -171,6 +179,8 @@ class Informacion(db.Model):
             "descripcion": self.descripcion,
             "user_id": self.user_id,
             "user": self.user.serialize(),
+            "activo": self.activo.serialize(),
+            "comentario_rep": self.comentario_rep.serialize(),
         }
 
     def save(self):
@@ -183,6 +193,8 @@ class ComentariosProducto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     fecha = db.Column(db.DateTime,  default=datetime.today, nullable=False)
     comentario = db.Column(db.String(120), default=True)
+    activo = db.Column(db.Boolean(), default=True)
+    comentario_rep = db.Column(db.String(240), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     producto_id = db.Column(db.Integer, db.ForeignKey('informacion.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('comentarios_productos', lazy=True))
@@ -199,6 +211,8 @@ class ComentariosProducto(db.Model):
             "producto_id": self.producto_id,
             "user": self.user.serialize(),
             "producto": self.producto.serialize(),
+            "activo": self.activo.serialize(),
+            "comentario_rep": self.comentario_rep.serialize(),
             
            
                         
