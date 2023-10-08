@@ -11,6 +11,9 @@ flask-jwt-extended = "*"
 python-dotenv = "*"
 flask-sqlalchemy = "*"
 pymysql = "*"
+cryptography = "*"
+werkzeug = "*"
+ansible = "*"
 
 [dev-packages]
 
