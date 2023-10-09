@@ -1,9 +1,14 @@
 import os
 import datetime
 from flask import Flask, request, jsonify
+
+
+# Resto de tu código que utiliza 'cryptography'
+
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_identity, create_access_token, jwt_required
+from datetime import timedelta
 from models import db, User, Foro, Informacion, Comentarios, Comercio, ComentariosProducto
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
@@ -38,6 +43,7 @@ def register():
     pais = request.json.get("pais")
     region = request.json.get("region")
     fechanac = request.json.get("fechanac")
+    role = request.json.get("role")
     
     # Validamos los datos ingresados
     if not correo:
@@ -60,6 +66,9 @@ def register():
 
     if not fechanac:
         return jsonify({"fail": "fechanac es requerida"}), 422
+    
+    if not role:
+        return jsonify({"fail": "role es requerida"}), 422
 
 
     # Buscamos el usuario a ver si ya existe con ese username
@@ -77,15 +86,10 @@ def register():
     user.pais = pais
     user.region = region
     user.fechanac = fechanac 
+    user.role = role 
     user.save()
     
     return jsonify({ "success": "Registro exitoso, por favor inicie sesion!"}), 200
-
-@app.route('/users', methods=['GET'])
-def get_users():
-    users = User.query.all()
-    user_list = [user.serialize() for user in users]
-    return jsonify(users= user_list)
 
 
 
@@ -113,7 +117,7 @@ def login():
     
     # expires = datetime.timedelta(days=5)
     # access_token = create_access_token(identity=user.id, expires_delta=expires)
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=user.id, expires_delta=timedelta(days=365))
     
     data = {
         "success": "Inicio de sesion exitoso!",
@@ -132,15 +136,32 @@ def profile():
     
     return jsonify({ "message": "Ruta privada", "user": user.correo }), 200
 
+@app.route('/api/users', methods=['GET'])
+@jwt_required()
+def get_all_users():
+    current_user_id = get_jwt_identity()
+    # Asegúrate de que el usuario actual tiene permiso para acceder a esta ruta,
+    # si es necesario.
+    # Puedes verificar permisos o roles aquí antes de continuar.
+
+    # Luego, obtén todos los usuarios de la base de datos.
+    users = User.query.all()
+
+    # Convierte los usuarios en una lista de diccionarios.
+    user_list = [{"id": user.id, "correo": user.correo, "nombre": user.nombre, "apellido": user.apellido, "role": user.role} for user in users]
+
+    return jsonify({"message": "Lista de usuarios", "users": user_list}), 200
+
+
 @app.route('/api/post_topic', methods=['POST'])
 def create_post():    
     # Obtiene los datos del nuevo tema del cuerpo de la solicitud JSON
     data = request.json
     user_id = data.get('user_id')
+
     # Crea una instancia de la clase Foro con los datos proporcionados
     nuevo_post = Foro(
         titulo=data["titulo"],
-        
         contenido=data["contenido"],
         user_id=user_id  # Asigna el ID del usuario al tema
     )
@@ -193,6 +214,26 @@ def post_comment():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/update_foro/<int:id>', methods=['PUT'])
+def update_foro(id):
+    user_id = request.json.get('user_id')  # Obtener user_id de la solicitud
+    
+    # Verificar si se proporcionó un user_id válido en la solicitud
+    if user_id is None:
+        return jsonify({'message': 'El campo user_id es requerido'}), 400
+    # Buscar el comentario en la base de datos por su ID
+    update = Foro.query.get(id)
+    # Verificar si el comentario existe
+    if update is None:
+        return jsonify({'message': 'El producto no existe'}), 404
+   
+    try:
+        update.activo = request.json.get('activo', update.activo)
+        update.comentario_rep = request.json.get('comentario_rep', update.comentario_rep)
+        update.save()  # Guardar los cambios en la base de datos
+        return jsonify({'message': 'Articulo actualizado exitosamente'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/post_comments/<int:foro_id>', methods=['GET'])
 def get_comments(foro_id):
@@ -272,6 +313,8 @@ def update_producto(id):
     nombre = request.json.get('nombre')  # Obtener user_id de la solicitud
     direccion = request.json.get('direccion')  # Obtener user_id de la solicitud
     descripcion = request.json.get('descripcion')  # Obtener user_id de la solicitud
+    activo = request.json.get('activo')  # Obtener user_id de la solicitud
+    comentario_rep = request.json.get('comentario_rep')  # Obtener user_id de la solicitud
     # Verificar si se proporcionó un user_id válido en la solicitud
     if user_id is None:
         return jsonify({'message': 'El campo user_id es requerido'}), 400
@@ -281,15 +324,15 @@ def update_producto(id):
     if informacion is None:
         return jsonify({'message': 'El producto no existe'}), 404
     # Verificar si el user_id de la solicitud coincide con el user_id del comentario
-    if user_id != informacion.user_id:
-
-        return jsonify({'message': 'No tienes permiso para actualizar esta informacion'}), 403
+  
     # Actualizar el contenido del comentario con los datos de la solicitud
     try:
         informacion.id = request.json.get('id', informacion.id)
         informacion.nombre = request.json.get('nombre', informacion.nombre)
         informacion.direccion = request.json.get('direccion', informacion.direccion)
         informacion.descripcion = request.json.get('descripcion', informacion.descripcion)
+        informacion.activo = request.json.get('activo', informacion.activo)
+        informacion.comentario_rep = request.json.get('comentario_rep', informacion.comentario_rep)
         informacion.save()  # Guardar los cambios en la base de datos
         return jsonify({'message': 'Articulo actualizado exitosamente'}), 200
     except Exception as e:
@@ -330,9 +373,7 @@ def delete_comment(id):
     # Verificar si el comentario existe
     if comentario is None:
         return jsonify({'message': 'El comentario no existe'}), 404
-    # Verificar si el user_id de la solicitud coincide con el user_id del comentario
-    if user_id != comentario.user_id:
-        return jsonify({'message': 'No tienes permiso para eliminar este comentario'}), 403
+
     # Eliminar el comentario de la base de datos
     try:
         comentario.delete()
@@ -351,12 +392,11 @@ def update_comment(id):
     # Verificar si el comentario existe
     if comentario is None:
         return jsonify({'message': 'El comentario no existe'}), 404
-    # Verificar si el user_id de la solicitud coincide con el user_id del comentario
-    if user_id != comentario.user_id:
-        return jsonify({'message': 'No tienes permiso para actualizar este comentario'}), 403
     # Actualizar el contenido del comentario con los datos de la solicitud
     try:
         comentario.comentario = request.json.get('comentario', comentario.comentario)
+        comentario.comentario_rep = request.json.get('comentario_rep', comentario.comentario_rep)
+        comentario.activo = request.json.get('activo', comentario.activo)
         comentario.save()  # Guardar los cambios en la base de datos
         return jsonify({'message': 'Comentario actualizado exitosamente'}), 200
     except Exception as e:
@@ -471,6 +511,8 @@ def post_product_comment():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+
 @app.route('/api/product_comment/<int:producto_id>', methods=['GET'])
 def get_product_comment(producto_id):
     # Busca los comentarios relacionados con el tema (post) por su ID en la base de datos
@@ -484,6 +526,7 @@ def get_product_comment(producto_id):
 @app.route('/api/update_comment_product/<int:id>', methods=['PUT'])
 def update_comment_product(id):
     user_id = request.json.get('user_id')  # Obtener user_id de la solicitud
+    
     # Verificar si se proporcionó un user_id válido en la solicitud
     if user_id is None:
         return jsonify({'message': 'El campo user_id es requerido'}), 400
@@ -492,12 +535,11 @@ def update_comment_product(id):
     # Verificar si el comentario existe
     if comentario is None:
         return jsonify({'message': 'El comentario no existe'}), 404
-    # Verificar si el user_id de la solicitud coincide con el user_id del comentario
-    if user_id != comentario.user_id:
-        return jsonify({'message': 'No tienes permiso para actualizar este comentario'}), 403
     # Actualizar el contenido del comentario con los datos de la solicitud
     try:
         comentario.comentario = request.json.get('comentario', comentario.comentario)
+        comentario.activo = request.json.get('activo', comentario.activo)  # Obtener user_id de la solicitud
+        comentario.comentario_rep = request.json.get('comentario_rep', comentario.comentario_rep)  # Obtener user_id de la solicitud
         comentario.save()  # Guardar los cambios en la base de datos
         return jsonify({'message': 'Comentario actualizado exitosamente'}), 200
     except Exception as e:
@@ -523,6 +565,18 @@ def delete_product_comment(id):
         return jsonify({'message': 'Comentario eliminado exitosamente'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/user/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    user = User.query.get(user_id)
+
+    if user is None:
+        return jsonify({'message': 'El usuario no existe'}), 404
+
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({'message': 'Usuario eliminado correctamente'}), 200
 
 
 
